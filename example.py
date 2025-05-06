@@ -1,16 +1,13 @@
 from coco_mailer import Client, EmailMessage
 
-client = Client()
+client = Client(client_secret="4910672670394566", config="3179170")
 
 email = EmailMessage(
-    subject="Welcome to Our App",
-    to=["user@example.com"],
-    html_file="emails/welcome.html",
-    context=[
-        {"key": "username", "value": "John"},
-        {"key": "app_name", "value": "FutureMail"},
-    ],
+    subject="Welcome to FutureMail",
+    to=["chiderapatrickk@gmail.com","lordyacey@gmail.com"],
+    content="Thanks for joining us!",
+    context={"username": "John", "app": "FutureMail"},
 )
 
-success, message = client.send_mail(email)
-print(success, message)
+success, msg = client.send_mail(email)
+print(success, msg)

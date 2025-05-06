@@ -1,14 +1,16 @@
 import os
 import requests
 from typing import List, Optional, Dict, Tuple, Union
-from errors import CocoError
+from .errors import CocoError
 
 
 class EmailMessage:
+
     def __init__(
         self,
         subject: str,
         to: List[str],
+        config: Optional[str] = None,
         content: Optional[str] = None,
         html: Optional[Union[str, os.PathLike]] = None,
         context: Optional[Dict[str, str]] = None,
@@ -18,7 +20,7 @@ class EmailMessage:
         self.content = content
         self.html = html
         self.context = context or {}
-
+        self.config = config
         self._validate()
 
     def _validate(self):
@@ -43,7 +45,7 @@ class EmailMessage:
 
         return {
             "subject": self.subject,
-            "to": self.to,
+            "recipient_list": self.to,
             "content": self.content,
             "html": html_content,
             "context": self.context,
@@ -51,9 +53,15 @@ class EmailMessage:
 
 
 class Client:
-    def __init__(self, client_secret: Optional[str] = None, url: Optional[str] = None):
+    def __init__(
+        self,
+        config: str,
+        client_secret: Optional[str] = None,
+        url: Optional[str] = None,
+    ):
         self.url = url or "http://127.0.0.1:8000"
         self.client_secret = client_secret or os.getenv("COCO_SECRET")
+        self.config = config or os.getenv("COCO_CONFIG")
 
         if not self.client_secret:
             raise CocoError(
@@ -61,17 +69,27 @@ class Client:
                 "Set it via the COCO_SECRET environment variable or pass it into the Client class."
             )
 
+        if not self.config:
+            raise CocoError(
+                "Email Config was not set. "
+                "Set it via the COCO_CONFIG environment variable or pass it into the Client class."
+            )
+
     def send_mail(self, message: EmailMessage) -> Tuple[bool, str]:
+        config = message.config or self.config
         try:
             headers = {
-                "Authorization": f"Bearer {self.client_secret}",
+                "Authorization": f"Token {self.client_secret}",
                 "Content-Type": "application/json",
             }
 
             payload = message.get_payload()
 
             response = requests.post(
-                f"{self.url}/api/send/", headers=headers, json=payload, timeout=10
+                f"{self.url}/email/send-mail/{config}",
+                headers=headers,
+                json=payload,
+                timeout=10,
             )
 
             if response.status_code == 200:
