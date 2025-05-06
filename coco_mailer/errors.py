@@ -1,0 +1,2 @@
+class CocoError(Exception):
+    pass
